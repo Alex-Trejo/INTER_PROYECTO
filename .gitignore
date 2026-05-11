@@ -1,0 +1,11 @@
+venv/
+.venv/
+Backend/venv/
+
+.env
+.env.*
+Backend/.env
+Frontend/cliente_web/.env.local
+
+conversacion_chaski_alert.md
+Backend/conversacion_chaski_alert.md
