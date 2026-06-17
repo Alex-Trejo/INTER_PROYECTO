@@ -7,15 +7,8 @@ import {
   ActivityIndicator, TouchableOpacity, Animated, Vibration, Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { API_URL, COLORS } from "../config";
-
-interface Comunicado {
-  id: number;
-  titulo: string;
-  mensaje: string;
-  autor: string;
-  fecha_publicacion: string;
-}
+import { COLORS } from "../config";
+import { useComunicados, Comunicado } from "../src/contexts/ComunicadosContext";
 
 const GRADIENTS = [
   ["#0D7377", "#23B5C0"],
@@ -46,76 +39,7 @@ function getInitials(name: string): string {
 }
 
 export default function ComunicadosScreen() {
-  const [data, setData] = useState<Comunicado[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [newAlert, setNewAlert] = useState<string | null>(null);
-  const lastKnownIds = useRef<Set<number>>(new Set());
-  const isFirstLoad = useRef(true);
-  const alertAnim = useRef(new Animated.Value(0)).current;
-
-  // Show in-app notification banner + vibration + system alert
-  const showNotification = useCallback((comunicado: Comunicado) => {
-    // 1. Vibrate phone (double buzz)
-    Vibration.vibrate([0, 300, 150, 300]);
-
-    // 2. Show animated banner inside the app
-    setNewAlert(`📢 ${comunicado.autor}: ${comunicado.titulo}`);
-    alertAnim.setValue(0);
-    Animated.sequence([
-      Animated.timing(alertAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
-      Animated.delay(5000),
-      Animated.timing(alertAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
-    ]).start(() => setNewAlert(null));
-
-    // 3. Show system Alert dialog
-    Alert.alert(
-      "📢 Nuevo Comunicado",
-      `${comunicado.autor}:\n\n${comunicado.titulo}\n\n${comunicado.mensaje.substring(0, 150)}...`,
-      [{ text: "Entendido", style: "default" }],
-      { cancelable: true }
-    );
-  }, [alertAnim]);
-
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/comunicados`);
-      if (!res.ok) throw new Error("Error al obtener comunicados");
-      const comunicados: Comunicado[] = await res.json();
-
-      // Check for new comunicados (not on first load)
-      if (!isFirstLoad.current && comunicados.length > 0) {
-        const newComunicados = comunicados.filter(c => !lastKnownIds.current.has(c.id));
-        for (const newC of newComunicados) {
-          showNotification(newC);
-        }
-      }
-
-      // Update known IDs
-      lastKnownIds.current = new Set(comunicados.map(c => c.id));
-      isFirstLoad.current = false;
-
-      setData(comunicados);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error de conexion");
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  }, [showNotification]);
-
-  // Initial fetch
-  useEffect(() => { fetchData(); }, [fetchData]);
-
-  // Polling every 10 seconds for new comunicados
-  useEffect(() => {
-    const interval = setInterval(fetchData, POLL_INTERVAL);
-    return () => clearInterval(interval);
-  }, [fetchData]);
-
-  const onRefresh = () => { setRefreshing(true); fetchData(); };
+  const { data, loading, refreshing, error, onRefresh, fetchData } = useComunicados();
 
   const renderCard = ({ item, index }: { item: Comunicado; index: number }) => {
     const colors = GRADIENTS[index % GRADIENTS.length];
@@ -149,21 +73,6 @@ export default function ComunicadosScreen() {
 
   return (
     <View style={s.container}>
-      {/* In-app notification banner */}
-      {newAlert && (
-        <Animated.View style={[s.alertBanner, {
-          opacity: alertAnim,
-          transform: [{ translateY: alertAnim.interpolate({ inputRange: [0, 1], outputRange: [-80, 0] }) }],
-        }]}>
-          <View style={s.alertIconWrap}>
-            <Ionicons name="notifications" size={20} color="white" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.alertLabel}>Nuevo comunicado</Text>
-            <Text style={s.alertText} numberOfLines={2}>{newAlert}</Text>
-          </View>
-        </Animated.View>
-      )}
 
       <View style={s.header}>
         <View>
@@ -221,9 +130,4 @@ const s = StyleSheet.create({
   cardMessage: { fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 20 },
   emptyContainer: { alignItems: "center", paddingTop: 80 },
   emptyText: { fontSize: 16, color: COLORS.textMuted, marginTop: 12 },
-  // Notification banner
-  alertBanner: { position: "absolute", top: 44, left: 16, right: 16, zIndex: 100, backgroundColor: COLORS.teal600, borderRadius: 20, padding: 16, flexDirection: "row", alignItems: "center", gap: 14, elevation: 12, shadowColor: "#000", shadowOpacity: 0.3, shadowRadius: 20 },
-  alertIconWrap: { width: 40, height: 40, borderRadius: 14, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
-  alertLabel: { fontSize: 10, fontWeight: "700", color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 2 },
-  alertText: { fontSize: 14, fontWeight: "700", color: "white" },
 });

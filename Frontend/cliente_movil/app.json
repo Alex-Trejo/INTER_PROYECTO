@@ -2,6 +2,7 @@
   "expo": {
     "name": "Chaski Alerta",
     "slug": "chaski-alerta",
+    "scheme": "chaskialerta",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/logo.png",
@@ -19,6 +20,7 @@
       }
     },
     "android": {
+      "package": "com.chaskialerta.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/logo.png",
         "backgroundColor": "#0D7377"
@@ -38,7 +40,16 @@
         {
           "locationWhenInUsePermission": "Chaski Alerta necesita tu ubicación para enviar alertas de emergencia."
         }
-      ]
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/logo.png",
+          "color": "#0D7377",
+          "sounds": []
+        }
+      ],
+      "expo-secure-store"
     ]
   }
 }

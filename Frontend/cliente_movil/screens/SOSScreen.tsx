@@ -7,10 +7,14 @@ import {
   Animated, Vibration, ActivityIndicator, Platform,
 } from "react-native";
 import * as Location from "expo-location";
+import * as Network from "expo-network";
+import * as SMS from "expo-sms";
 import { Ionicons } from "@expo/vector-icons";
-import { API_URL, COLORS } from "../config";
+import { API_URL, COLORS, DIRECTIVA_PHONE } from "../config";
+import { useAuth } from "../src/contexts/AuthContext";
 
 export default function SOSScreen() {
+  const { accessToken } = useAuth();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
@@ -53,17 +57,44 @@ export default function SOSScreen() {
         setLocation(loc);
       }
 
-      const res = await fetch(`${API_URL}/api/alertas`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          lat: loc.coords.latitude,
-          lng: loc.coords.longitude,
-          usuario_nombre: "Usuario Movil",
-        }),
-      });
+      const networkState = await Network.getNetworkStateAsync();
+      
+      // En Android, isInternetReachable puede ser nulo si no se puede determinar,
+      // por lo que isConnected es el chequeo principal.
+      if (networkState.isConnected) {
+        if (!accessToken) throw new Error("No estás autenticado. Vuelve a iniciar sesión.");
 
-      if (!res.ok) throw new Error("Error del servidor");
+        const res = await fetch(`${API_URL}/api/alertas`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`
+          },
+          body: JSON.stringify({
+            lat: loc.coords.latitude,
+            lng: loc.coords.longitude,
+          }),
+        });
+
+        if (!res.ok) throw new Error("Error del servidor al emitir la alerta por internet.");
+      } else {
+        // 🔴 CONTINGENCIA OFFLINE (SMS NATIVO)
+        const isAvailable = await SMS.isAvailableAsync();
+        if (isAvailable) {
+          const mensajeSms = `🚨 SOS. Yanapaway. Necesito ayuda. Sin conexión a internet. Mis coordenadas: Lat ${loc.coords.latitude.toFixed(6)}, Lon ${loc.coords.longitude.toFixed(6)}`;
+          
+          const { result } = await SMS.sendSMSAsync(
+            [DIRECTIVA_PHONE], // Número desde variable de entorno
+            mensajeSms
+          );
+
+          if (result === 'cancelled') {
+             throw new Error("Envío de SMS de emergencia cancelado por el usuario.");
+          }
+        } else {
+          throw new Error("No hay servicio de SMS disponible en este dispositivo para la contingencia offline.");
+        }
+      }
 
       setSent(true);
       Animated.timing(successAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
@@ -71,8 +102,8 @@ export default function SOSScreen() {
         setSent(false);
         successAnim.setValue(0);
       }, 4000);
-    } catch (err) {
-      Alert.alert("Error", "No se pudo enviar la alerta. Verifica tu conexion a la red.");
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "No se pudo procesar la alerta.");
     } finally {
       setSending(false);
     }

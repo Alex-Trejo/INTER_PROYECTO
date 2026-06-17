@@ -7,7 +7,10 @@
 // Ejecuta 'ipconfig' en Windows para obtenerla
 // Con USB (adb reverse): usa localhost
 // Sin USB (misma WiFi): usa tu IP LAN, ej: http://192.168.50.10:8000
-export const API_URL = "http://localhost:8000";
+export const API_URL = process.env.EXPO_PUBLIC_API_URL as string;
+export const DIRECTIVA_PHONE = process.env.EXPO_PUBLIC_DIRECTIVA_PHONE as string;
+export const KEYCLOAK_URL = process.env.EXPO_PUBLIC_KEYCLOAK_URL as string;
+export const CLIENT_ID = process.env.EXPO_PUBLIC_CLIENT_ID as string;
 
 // Colores del design system
 export const COLORS = {

@@ -61,19 +61,23 @@ adb shell am start -a android.intent.action.VIEW -d "exp://localhost:8081" host.
 
 ---
 
-## 🔄 Configuración de Red
+## 🔄 Configuración de Red (Cambio de IP)
 
-### Con USB (ADB Reverse) — RECOMENDADO
-- `config.ts` usa `localhost` → **NO necesitas cambiar nada al cambiar de red**
-- El tráfico va por el cable USB, no por WiFi
+Si tu servidor de Backend y Keycloak cambian de dirección IP (ej. te conectas a otra red WiFi), **DEBES actualizar los siguientes lugares ANTES de compilar la app**:
 
-### Sin USB (WiFi directo)
-- Edita `config.ts` y cambia `API_URL` por la IP de tu PC:
-  ```typescript
-  export const API_URL = "http://TU_IP:8000";
-  ```
-- PC y celular deben estar en la **misma red WiFi**
-- Necesitas abrir el firewall de Windows (ver README principal)
+1. Abre el archivo `.env` ubicado en `Frontend/cliente_movil/.env`
+2. Modifica la IP en las variables `EXPO_PUBLIC_API_URL` y `EXPO_PUBLIC_KEYCLOAK_URL`:
+   ```env
+   EXPO_PUBLIC_API_URL=http://NUEVA_IP:8000
+   EXPO_PUBLIC_KEYCLOAK_URL=http://NUEVA_IP:8080
+   ```
+3. Guarda el archivo `.env`.
+4. Vuelve a ejecutar la compilación para inyectar la nueva IP al código:
+   ```cmd
+   .\build-android-release.bat
+   ```
+
+*Nota: Con cable USB (ADB Reverse) no necesitas cambiar nada si usaste `localhost`.*
 
 ---
 
@@ -109,3 +113,24 @@ cliente_movil/
 1. **Red:** Con USB no hay limitaciones. Sin USB, PC y celular deben estar en el mismo WiFi
 2. **GPS:** Requiere permiso de ubicación (se solicita al usar SOS)
 3. **Expo Go:** La versión de Expo Go debe ser compatible con SDK 54+
+
+---
+
+## 📡 Arquitectura de Notificaciones (Online & Offline)
+
+### 1. Contingencia SMS Offline
+Cuando el comunero **no tiene internet** (ni WiFi ni Datos), al presionar el Botón SOS, la aplicación redirige inmediatamente la alerta a la red GSM (SMS).
+- Se redacta un SMS automático.
+- Se adjuntan las coordenadas GPS y Google Maps.
+- Se envía directo al número de la Directiva configurado en las variables de entorno.
+
+### 2. Notificaciones de Avisos Globales (App Abierta)
+Implementado con Context Providers y `expo-notifications`.
+- Si la app está abierta en **cualquier pantalla** (SOS, Perfil, etc.), el sistema consulta el Backend cada 10s.
+- Si hay un nuevo aviso, la aplicación vibra, muestra una notificación Push Nativa (Prioridad MAX) y despliega un Banner Premium Flotante In-App.
+
+### 3. 🚀 Próxima Implementación: Firebase Cloud Messaging (FCM)
+Actualmente, por restricciones de batería de Android (Doze Mode), la aplicación suspende sus temporizadores en segundo plano. Para garantizar que los avisos suenen incluso cuando la app está **Cerrada** o el celular bloqueado, se implementará en la V2:
+- Integración de `@react-native-firebase/messaging`.
+- El Backend FastAPI disparará las alertas directamente hacia los servidores de Google FCM usando Firebase Admin SDK.
+- Google FCM "despertará" el celular a nivel de hardware, asegurando que el sonido y el Push nativo lleguen al instante, con máxima fiabilidad para emergencias comunitarias.
