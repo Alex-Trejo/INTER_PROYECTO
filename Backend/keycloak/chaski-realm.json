@@ -1,0 +1,100 @@
+{
+  "realm": "chaski-realm",
+  "enabled": true,
+  "displayName": "Chaski Alerta",
+  "displayNameHtml": "<b>🏔️ Chaski Alerta</b>",
+  "registrationAllowed": false,
+  "resetPasswordAllowed": true,
+  "loginWithEmailAllowed": true,
+  "registrationEmailAsUsername": true,
+  "rememberMe": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "roles": {
+    "realm": [
+      {
+        "name": "Directiva",
+        "description": "Directiva del Cabildo Comunal / Pushak Ayllu"
+      },
+      {
+        "name": "Comunero",
+        "description": "Miembro aprobado de la comunidad / Ayllu Runa"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "fastapi-backend",
+      "name": "Chaski Backend API",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "fastapi-backend-secret",
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:8000/*"],
+      "webOrigins": ["http://localhost:8000"],
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "web-admin",
+      "name": "Chaski Panel Web",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "web-admin-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["http://localhost:3000/*"],
+      "webOrigins": ["http://localhost:3000"],
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "mobile-app",
+      "name": "Chaski App Movil",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["exp://localhost:8081/*", "http://localhost:8081/*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect"
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@chaski.ec",
+      "email": "admin@chaski.ec",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Admin",
+      "lastName": "Directiva",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["Directiva", "default-roles-chaski-realm"]
+    },
+    {
+      "username": "vecino@chaski.ec",
+      "email": "vecino@chaski.ec",
+      "enabled": false,
+      "emailVerified": true,
+      "firstName": "Juan",
+      "lastName": "Quispe",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "vecino123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["default-roles-chaski-realm"]
+    }
+  ]
+}
