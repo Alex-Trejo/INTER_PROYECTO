@@ -46,11 +46,13 @@ Antes de ejecutar el proyecto, asegúrate de tener instalado:
 │  (Celular)   │────▶│  (Web :3000) │────▶│  (API :8000) │
 │  via USB/ADB │     │              │     │              │
 └──────────────┘     └──────────────┘     └──────┬───────┘
-                                                  │
-                                          ┌───────▼───────┐
-                                          │  🐳 PostGIS   │
-                                          │  (DB :5433)   │
-                                          └───────────────┘
+                                                 │
+                                 ┌───────────────┴───────────────┐
+                                 │                               │
+                         ┌───────▼───────┐               ┌───────▼───────┐
+                         │  🐳 PostGIS   │               │  🔐 Keycloak  │
+                         │  (DB :5433)   │◀──────────────│  (Auth :8080) │
+                         └───────────────┘               └───────────────┘
 ```
 
 ---
@@ -237,8 +239,7 @@ INTER_PROYECTO/
 | **Frontend Web** | http://localhost:3000 | Panel de monitoreo |
 | **Backend API** | http://localhost:8000 | API REST |
 | **Swagger Docs** | http://localhost:8000/docs | Documentación interactiva |
-| **ReDoc** | http://localhost:8000/redoc | Documentación alternativa |
-| **OpenAPI JSON** | http://localhost:8000/openapi.json | Esquema de la API |
+| **Keycloak Auth**| http://localhost:8080 | Gestor de Identidad y Acceso (admin/admin) |
 | **PostGIS DB** | localhost:5433 | Base de datos (user: admin, pass: password123) |
 | **Expo Mobile** | http://localhost:8081 | Servidor Metro Bundler |
 

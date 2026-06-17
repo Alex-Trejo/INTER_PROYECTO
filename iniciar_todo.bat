@@ -47,9 +47,10 @@ if not exist "Frontend\cliente_movil\node_modules" (
 echo   [OK] Cliente Movil node_modules encontrado
 
 echo.
-echo ── 1/5 Levantando Docker PostGIS (puerto 5433)...
-start "CHASKI - Docker PostGIS" cmd /k "cd /d %~dp0 && docker-compose up && pause"
-timeout /t 5 /nobreak >nul
+echo ── 1/5 Levantando Docker (PostGIS + Keycloak)...
+start "CHASKI - Docker Infra" cmd /k "cd /d %~dp0 && docker-compose up && pause"
+timeout /t 15 /nobreak >nul
+echo   [OK] Docker iniciado (PostGIS :5433 + Keycloak :8080)
 
 echo ── 2/5 Levantando Backend FastAPI (puerto 8000)...
 start "CHASKI - Backend FastAPI" cmd /k "cd /d %~dp0Backend && .\venv\Scripts\activate && python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
@@ -66,11 +67,13 @@ if exist "%ADB_PATH%" (
     if not errorlevel 1 (
         "%ADB_PATH%" reverse tcp:8081 tcp:8081 >nul 2>&1
         "%ADB_PATH%" reverse tcp:8000 tcp:8000 >nul 2>&1
-        echo   [OK] ADB reverse configurado (puertos 8081 y 8000)
+        "%ADB_PATH%" reverse tcp:8080 tcp:8080 >nul 2>&1
+        echo   [OK] ADB reverse configurado (puertos 8081, 8000 y 8080)
     ) else (
         echo   [AVISO] No se detecto telefono por USB. Conectalo y ejecuta:
         echo           adb reverse tcp:8081 tcp:8081
         echo           adb reverse tcp:8000 tcp:8000
+        echo           adb reverse tcp:8080 tcp:8080
     )
 ) else (
     echo   [AVISO] ADB no encontrado. Para movil, instala Android SDK Platform Tools.
@@ -85,13 +88,15 @@ echo  ╔═══════════════════════�
 echo  ║       TODOS LOS SERVICIOS INICIADOS           ║
 echo  ╠═══════════════════════════════════════════════╣
 echo  ║  Docker PostGIS .... http://localhost:5433    ║
+echo  ║  Keycloak Admin .... http://localhost:8080    ║
 echo  ║  Backend FastAPI ... http://localhost:8000    ║
 echo  ║  Swagger Docs ...... http://localhost:8000/docs║
 echo  ║  Frontend Web ...... http://localhost:3000    ║
 echo  ║  Expo Mobile ....... http://localhost:8081    ║
 echo  ╠═══════════════════════════════════════════════╣
-echo  ║  MOVIL: En la terminal de Expo, presiona 'a' ║
-echo  ║  para abrir en tu Android conectado por USB   ║
+echo  ║  KEYCLOAK: admin / admin                      ║
+echo  ║  DEMO: admin@chaski.ec / admin123             ║
+echo  ║  MOVIL: Presiona 'a' en terminal Expo        ║
 echo  ╚═══════════════════════════════════════════════╝
 echo.
 pause

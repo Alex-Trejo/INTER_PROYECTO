@@ -9,3 +9,25 @@ Frontend/cliente_web/.env.local
 
 conversacion_chaski_alert.md
 Backend/conversacion_chaski_alert.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node / React Native / Expo
+node_modules/
+.expo/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Android
+*.apk
+*.aab
+android/app/build/
+android/.gradle/
+android/.idea/
+android/local.properties
+.cxx/

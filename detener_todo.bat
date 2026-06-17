@@ -21,10 +21,10 @@ echo ── 3/4 Deteniendo Backend FastAPI...
 taskkill /FI "WINDOWTITLE eq CHASKI - Backend FastAPI*" /F >nul 2>&1
 echo   [OK] Backend detenido
 
-echo ── 4/4 Deteniendo Docker PostGIS...
+echo ── 4/4 Deteniendo Docker (PostGIS + Keycloak)...
 cd /d %~dp0
 docker-compose down >nul 2>&1
-taskkill /FI "WINDOWTITLE eq CHASKI - Docker PostGIS*" /F >nul 2>&1
+taskkill /FI "WINDOWTITLE eq CHASKI - Docker Infra*" /F >nul 2>&1
 echo   [OK] Docker detenido
 
 REM Limpiar ADB reverse
