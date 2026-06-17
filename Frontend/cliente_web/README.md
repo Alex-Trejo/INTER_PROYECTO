@@ -230,6 +230,14 @@ El frontend consume los siguientes endpoints:
 
 > La URL base se configura en `.env.local` con `NEXT_PUBLIC_API_URL`.
 
+### ⚠️ Advertencia de Seguridad (Endpoint de Sesión)
+
+Para facilitar las pruebas de desarrollo y validación con Swagger, el token JWT (`access_token`) ha sido expuesto intencionalmente en el objeto de sesión del cliente. 
+
+Si visitas la ruta `http://localhost:3000/api/auth/session` mientras estás logueado, podrás visualizar y copiar tu Bearer Token en texto plano.
+
+> **[CRÍTICO]**: Este comportamiento es un **riesgo de seguridad grave en producción** (facilita ataques XSS). Antes de desplegar esta aplicación a un entorno real, debes remover la línea `session.access_token = token.access_token` del archivo `src/app/api/auth/[...nextauth]/route.ts`. NextAuth por defecto oculta este token precisamente por seguridad.
+
 ### Manejo de Errores
 
 - **Error de conexión**: Banner rojo con mensaje + reintento automático (mapa: cada 5s)

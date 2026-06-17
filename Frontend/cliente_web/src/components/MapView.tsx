@@ -88,7 +88,7 @@ function ThemeAwareTiles() {
   );
 }
 
-export default function MapView({ alertas }: { alertas: Alerta[] }) {
+export default function MapView({ alertas, onResolveAlert }: { alertas: Alerta[], onResolveAlert?: (id: number, estado: "RESUELTA" | "FALSA_ALARMA") => void }) {
   const center: [number, number] = [-1.5, -78.5];
 
   return (
@@ -160,6 +160,32 @@ export default function MapView({ alertas }: { alertas: Alerta[] }) {
                   </span>
                 </div>
               </div>
+
+              {/* Actions */}
+              {onResolveAlert && (
+                <div style={{ display: "flex", gap: "8px", marginTop: "16px", paddingTop: "14px", borderTop: "1px solid var(--border-light)" }}>
+                  <button
+                    onClick={() => onResolveAlert(alerta.id, "FALSA_ALARMA")}
+                    style={{
+                      flex: 1, padding: "8px", borderRadius: "6px", fontSize: "12px", fontWeight: 600,
+                      background: "var(--red-50)", color: "var(--red-600)", border: "1px solid var(--red-200)",
+                      cursor: "pointer", transition: "all 0.2s"
+                    }}
+                  >
+                    Falsa Alarma
+                  </button>
+                  <button
+                    onClick={() => onResolveAlert(alerta.id, "RESUELTA")}
+                    style={{
+                      flex: 1, padding: "8px", borderRadius: "6px", fontSize: "12px", fontWeight: 600,
+                      background: "var(--green-500)", color: "white", border: "none",
+                      cursor: "pointer", transition: "all 0.2s"
+                    }}
+                  >
+                    Resuelta
+                  </button>
+                </div>
+              )}
             </div>
           </Popup>
         </Marker>

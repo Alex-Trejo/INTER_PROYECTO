@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, FormEvent } from "react";
+import { useSession } from "next-auth/react";
 import ComunicadoCard from "@/components/ComunicadoCard";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -14,6 +15,7 @@ interface Comunicado {
 }
 
 export default function AvisosPage() {
+  const { data: session, status } = useSession();
   const [comunicados, setComunicados] = useState<Comunicado[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -26,8 +28,14 @@ export default function AvisosPage() {
   const [autor, setAutor] = useState("");
 
   const fetchComunicados = useCallback(async () => {
+    if (status !== "authenticated" || !session) return;
     try {
-      const res = await fetch(`${API_URL}/api/comunicados`);
+      const token = (session as any)?.access_token;
+      const res = await fetch(`${API_URL}/api/comunicados`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (!res.ok) throw new Error("Error al obtener comunicados");
       const data = await res.json();
       setComunicados(data);
@@ -40,8 +48,10 @@ export default function AvisosPage() {
   }, []);
 
   useEffect(() => {
-    fetchComunicados();
-  }, [fetchComunicados]);
+    if (status === "authenticated") {
+      fetchComunicados();
+    }
+  }, [fetchComunicados, status]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -51,9 +61,13 @@ export default function AvisosPage() {
     setSuccessMsg(null);
 
     try {
+      const token = (session as any)?.access_token;
       const res = await fetch(`${API_URL}/api/comunicados`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           titulo: titulo.trim(),
           mensaje: mensaje.trim(),

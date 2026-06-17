@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { ReactNode, useState, useEffect } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 /* ─── Theme Toggle Hook ───────────────────────────── */
 function useTheme() {
@@ -60,11 +61,57 @@ const navItems: NavItem[] = [
       </svg>
     ),
   },
+  {
+    href: "/dashboard/historial-alertas",
+    label: "Historial de Alertas",
+    labelKichwa: "Riksiy Allpamapa",
+    icon: (active) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/membresia",
+    label: "Membresía",
+    labelKichwa: "Ayllu Tukuy",
+    icon: (active) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+      </svg>
+    ),
+  },
+  {
+    href: "/dashboard/comunidad",
+    label: "Comunidad",
+    labelKichwa: "Ayllu Runa",
+    icon: (active) => (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={active ? "white" : "currentColor"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
+        <path d="M2 12h20" />
+      </svg>
+    ),
+  },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { theme, toggle, mounted } = useTheme();
+  const { data: session } = useSession();
+
+  const handleLogout = async () => {
+    if (session?.id_token && session?.issuer) {
+      const logoutUrl = `${session.issuer}/protocol/openid-connect/logout?id_token_hint=${session.id_token}&post_logout_redirect_uri=${window.location.origin}`;
+      await signOut({ redirect: false });
+      window.location.href = logoutUrl;
+    } else {
+      signOut({ callbackUrl: "/" });
+    }
+  };
 
   return (
     <div className="flex min-h-screen" style={{ background: "var(--bg-body)" }}>
@@ -214,6 +261,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             })}
           </div>
         </nav>
+
+        {/* ─── Logout Button ────────────── */}
+        <div style={{ padding: "12px 16px 0" }}>
+          <button
+            onClick={handleLogout}
+            className="btn-secondary"
+            style={{
+              width: "100%",
+              padding: "10px",
+              justifyContent: "center",
+              color: "var(--red-600)",
+              border: "1px solid var(--red-100)",
+              background: "var(--red-50)",
+              transition: "all 0.2s ease"
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Salir / Lluqsiy
+          </button>
+        </div>
 
         {/* ─── Theme Toggle + Status ────────────── */}
         <div style={{ padding: "12px 16px 16px" }}>

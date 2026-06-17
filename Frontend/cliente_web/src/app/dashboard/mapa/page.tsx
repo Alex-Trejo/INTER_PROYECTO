@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useSession } from "next-auth/react";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
   ssr: false,
@@ -41,14 +42,21 @@ interface Alerta {
 }
 
 export default function MapaPage() {
+  const { data: session, status } = useSession();
   const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const fetchAlertas = useCallback(async () => {
+    if (status !== "authenticated" || !session) return;
     try {
-      const res = await fetch(`${API_URL}/api/alertas`);
+      const token = (session as any)?.access_token;
+      const res = await fetch(`${API_URL}/api/alertas`, {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      });
       if (!res.ok) throw new Error("Error al obtener alertas");
       const data = await res.json();
       setAlertas(data);
@@ -59,13 +67,37 @@ export default function MapaPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session, status]);
+
+  const handleResolveAlert = async (id: number, estado: "RESUELTA" | "FALSA_ALARMA") => {
+    if (status !== "authenticated" || !session) return;
+    try {
+      const token = (session as any)?.access_token;
+      const res = await fetch(`${API_URL}/api/alertas/${id}/estado`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ estado })
+      });
+      
+      if (!res.ok) throw new Error("Error al actualizar la alerta");
+      
+      // Update local state by removing the resolved alert
+      setAlertas(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al procesar la acción");
+    }
+  };
 
   useEffect(() => {
-    fetchAlertas();
-    const interval = setInterval(fetchAlertas, 5000);
-    return () => clearInterval(interval);
-  }, [fetchAlertas]);
+    if (status === "authenticated") {
+      fetchAlertas();
+      const interval = setInterval(fetchAlertas, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [fetchAlertas, status]);
 
   const today = new Date().toDateString();
   const todayCount = alertas.filter(
@@ -227,7 +259,7 @@ export default function MapaPage() {
             </div>
           </div>
         ) : (
-          <MapView alertas={alertas} />
+          <MapView alertas={alertas} onResolveAlert={handleResolveAlert} />
         )}
       </div>
     </div>
