@@ -1,0 +1,74 @@
+[
+  {
+    "paso": "RBAC-sin-sesion",
+    "observacion": "URL final: http://localhost:3000/api/auth/signin?callbackUrl=%2Fdashboard%2Fmembresia. Contenido visible: Sign in with Keycloak"
+  },
+  {
+    "paso": "Splash",
+    "observacion": "Texto: Sign in with Keycloak"
+  },
+  {
+    "paso": "Login-Keycloak",
+    "observacion": "Pantalla de login Keycloak: 🏔️ CHASKI ALERTA | Sign in to your account | Email  | Password | Remember me | Forgot Password? | New user? Register"
+  },
+  {
+    "paso": "Login-Keycloak",
+    "observacion": "Login OK como admin@chaski.ec (Directiva). URL: http://localhost:3000/dashboard/mapa"
+  },
+  {
+    "paso": "Mapa",
+    "observacion": "Sidebar/labels: Chaski Alerta |  | SEGURIDAD COMUNITARIA |  | PANEL DE CONTROL |  | Mapa de Alertas |  | Alerta Allpamapa |  | Comunicados |  | Willaykuna |  | Historial de Alertas |  | Riksiy Allpamapa |  | Membresía |  | Ayllu Tukuy |  | Comunidad |  | Ayllu Runa |  | Salir / Lluqsiy | Modo Claro | Sistema Kawsashka |  | Protegiendo a la comunidad en tiempo real"
+  },
+  {
+    "paso": "Mapa-polling",
+    "observacion": "Solo 0 request(s) a /api/alertas en 25s -> el mapa NO se auto-actualiza o intervalo largo"
+  },
+  {
+    "paso": "Avisos-muro",
+    "observacion": "Titulos visibles (basura sin moderar?): []"
+  },
+  {
+    "paso": "Avisos-polling",
+    "observacion": "0 requests a /api/comunicados en ~19s -> SIN auto-refresco (solo carga inicial/manual)"
+  },
+  {
+    "paso": "Avisos-indicador",
+    "observacion": "Indicador de ultima actualizacion visible: False"
+  },
+  {
+    "paso": "Avisos-validacion",
+    "observacion": "Con titulo='x' y mensaje='y' (1 caracter) el boton Publicar esta habilitado: True -> sin validacion de contenido minimo"
+  },
+  {
+    "paso": "Avisos-publicar",
+    "observacion": "Confirmacion previa a publicar: NO (publica directo). Mensaje de exito visible: True. Opcion de deshacer/editar/eliminar: False"
+  },
+  {
+    "paso": "Historial",
+    "observacion": "Texto: Chaski Alerta |  | SEGURIDAD COMUNITARIA |  | PANEL DE CONTROL |  | Mapa de Alertas |  | Alerta Allpamapa |  | Comunicados |  | Willaykuna |  | Historial de Alertas |  | Riksiy Allpamapa |  | Membresía |  | Ayllu Tukuy |  | Comunidad |  | Ayllu Runa |  | Salir / Lluqsiy | Modo Claro | Sistema Kawsashka |  | Protegiendo a la comunidad en tiempo real |  | Historia"
+  },
+  {
+    "paso": "Membresia",
+    "observacion": "Texto: Chaski Alerta |  | SEGURIDAD COMUNITARIA |  | PANEL DE CONTROL |  | Mapa de Alertas |  | Alerta Allpamapa |  | Comunicados |  | Willaykuna |  | Historial de Alertas |  | Riksiy Allpamapa |  | Membresía |  | Ayllu Tukuy |  | Comunidad |  | Ayllu Runa |  | Salir / Lluqsiy | Modo Claro | Sistema Kawsashka |  | Protegiendo a la comunidad en tiempo real |  | Solicitudes de Membresía | AYLLU TUKUY |  | Aprueba o rechaza nuevos miembros de la comunidad |  | Actualizar |  | No hay "
+  },
+  {
+    "paso": "Comunidad",
+    "observacion": "Texto: Chaski Alerta |  | SEGURIDAD COMUNITARIA |  | PANEL DE CONTROL |  | Mapa de Alertas |  | Alerta Allpamapa |  | Comunicados |  | Willaykuna |  | Historial de Alertas |  | Riksiy Allpamapa |  | Membresía |  | Ayllu Tukuy |  | Comunidad |  | Ayllu Runa |  | Salir / Lluqsiy | Modo Claro | Sistema Kawsashka |  | Protegiendo a la comunidad en tiempo real |  | Comunida"
+  },
+  {
+    "paso": "Tema",
+    "observacion": "Toggle de tema claro/oscuro funciona; captura tomada en oscuro"
+  },
+  {
+    "paso": "Responsive",
+    "observacion": "Viewport 375px: scroll horizontal (desborde): False"
+  },
+  {
+    "paso": "RBAC-comunero",
+    "observacion": "Vecino (rol Comunero) accede a /dashboard/membresia. URL: http://localhost:3000/dashboard/membresia. Ve: Chaski Alerta |  | SEGURIDAD COMUNITARIA |  | PANEL DE CONTROL |  | Mapa de Alertas |  | Alerta Allpamapa |  | Comunicados |  | Willaykuna |  | Historial de Alertas |  | Riksiy Allpamapa |  | Membresía |  | Ayllu Tukuy |  | Comunidad |  | Ayllu Runa |  | Salir / Lluqsiy | Modo Claro | Sistema Kawsashka |  | Protegiendo a la comunidad en tiempo real |  | Solicitudes de Membresía | AYLLU TUKUY |  | Aprueba o rechaza nuevos miembros de la comunidad |  | Actualizar |  | Error al obtener solicitudes pendientes |  | No hay solicitudes pendientes |  | Todos los usuarios han sido gestion"
+  },
+  {
+    "paso": "Swagger",
+    "observacion": "Documentacion interactiva de la API disponible"
+  }
+]

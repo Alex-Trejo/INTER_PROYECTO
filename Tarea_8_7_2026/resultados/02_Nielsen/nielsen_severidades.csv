@@ -1,0 +1,11 @@
+﻿ID;Heuristica;Problema;E1;E2;E3;E4;E5;Media
+P01;H4;La pantalla de inicio de sesión de Keycloak está en inglés;2;3;3;3;3;2.8
+P02;H5;Se publican comunicados triviales sin confirmación previa;2;2;2;2;2;2
+P03;H3;No existe editar ni eliminar comunicados publicados;2;4;4;3;2;3
+P04;H5;El botón SOS se dispara con un solo toque, sin confirmación;3;4;3;3;3;3.2
+P05;H1;Con la aplicación cerrada no llegan notificaciones de avisos;3;4;3;3;3;3.2
+P06;H1;El muro de comunicados web no se auto-refresca ni indica última actualización;1;2;2;1;1;1.4
+P07;H10;No existe ayuda ni onboarding para el usuario final;2;2;2;2;1;1.8
+P08;H8;La pantalla 'Info' móvil expone contenido técnico de desarrollador;2;2;2;1;2;1.8
+P09;H6;Con el GPS denegado el botón SOS queda inhabilitado sin alternativa;2;4;4;2;2;2.8
+P10;H4;La página intermedia de autenticación es genérica y en inglés;3;2;2;1;2;2
