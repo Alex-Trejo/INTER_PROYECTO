@@ -45,13 +45,19 @@ class AlertaEstadoUpdate(BaseModel):
 
 class ComunicadoCreate(BaseModel):
     """Datos para crear un comunicado oficial."""
-    titulo: str = Field(..., min_length=1, max_length=200, description="Título del comunicado")
-    mensaje: str = Field(..., min_length=1, description="Contenido del comunicado")
+    titulo: str = Field(..., min_length=5, max_length=200, description="Título del comunicado")
+    mensaje: str = Field(..., min_length=10, description="Contenido del comunicado")
     autor: Optional[str] = Field(
         default="Directiva Comunal",
         max_length=100,
         description="Autor del comunicado",
     )
+
+
+class ComunicadoUpdate(BaseModel):
+    """Datos para corregir un comunicado ya publicado."""
+    titulo: str = Field(..., min_length=5, max_length=200, description="Título del comunicado")
+    mensaje: str = Field(..., min_length=10, description="Contenido del comunicado")
 
 
 class ComunicadoResponse(BaseModel):

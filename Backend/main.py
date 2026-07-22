@@ -27,7 +27,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from core.config import settings
 from database.connection import database
-from routers import auth, alertas, comunicados, membresia, sectores, notificaciones, perfil
+from routers import auth, alertas, comunicados, membresia, sectores, notificaciones, perfil, dispositivos
+from core import push
 
 # ── Aplicación FastAPI ───────────────────────────────────────
 app = FastAPI(
@@ -66,6 +67,8 @@ async def startup():
     await database.connect()
     print(f"[OK] Conectado a PostGIS: {settings.DATABASE_URL.split('@')[1]}")
     print(f"[OK] Keycloak configurado: {settings.KEYCLOAK_SERVER_URL}/realms/{settings.KEYCLOAK_REALM}")
+    # Notificaciones push: si no hay credencial, el sistema sigue operativo sin ellas
+    push.inicializar()
 
 
 @app.on_event("shutdown")
@@ -83,6 +86,7 @@ app.include_router(membresia.router)
 app.include_router(notificaciones.router)
 app.include_router(sectores.router)
 app.include_router(perfil.router)
+app.include_router(dispositivos.router)
 
 
 # ── Health Check ─────────────────────────────────────────────

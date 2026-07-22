@@ -24,11 +24,17 @@ services:
       - KC_DB_USERNAME=admin
       - KC_DB_PASSWORD=password123
       - KC_HEALTH_ENABLED=true
+      # Detras de un proxy HTTPS (Cloudflare Tunnel), Keycloak debe confiar en
+      # X-Forwarded-Proto; si no, genera los enlaces en http:// y rompe el login.
+      - KC_PROXY_HEADERS=xforwarded
+      - KC_HOSTNAME_STRICT=false
     command: start-dev --import-realm
     ports:
       - "8080:8080"
     volumes:
       - ./Backend/keycloak/chaski-realm.json:/opt/keycloak/data/import/chaski-realm.json
+      # Tema propio del login con la identidad de Chaski Alerta
+      - ./Backend/keycloak/themes/chaski:/opt/keycloak/themes/chaski
     depends_on:
       - db
 

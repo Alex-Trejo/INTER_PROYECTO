@@ -4,7 +4,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
   View, Text, TouchableOpacity, StyleSheet, Alert,
-  Animated, Vibration, ActivityIndicator, Platform,
+  Animated, Vibration, ActivityIndicator, Linking,
 } from "react-native";
 import * as Location from "expo-location";
 import * as Network from "expo-network";
@@ -13,14 +13,74 @@ import { Ionicons } from "@expo/vector-icons";
 import { API_URL, COLORS, DIRECTIVA_PHONE } from "../config";
 import { useAuth } from "../src/contexts/AuthContext";
 
+// Tiempo que debe mantenerse pulsado el boton para emitir la alerta.
+const HOLD_MS = 3000;
+
 export default function SOSScreen() {
   const { accessToken } = useAuth();
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [location, setLocation] = useState<Location.LocationObject | null>(null);
   const [permissionDenied, setPermissionDenied] = useState(false);
+  const [sector, setSector] = useState<string | null>(null);
+  const [holding, setHolding] = useState(false);
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const successAnim = useRef(new Animated.Value(0)).current;
+  const holdAnim = useRef(new Animated.Value(0)).current;
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sector registrado en el perfil: se usa como ubicacion de respaldo si no hay GPS.
+  useEffect(() => {
+    if (!accessToken) return;
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/perfil/mi-perfil`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.sector) setSector(data.sector);
+      } catch {
+        // El sector es opcional: si falla, la alerta se envia igual.
+      }
+    })();
+  }, [accessToken]);
+
+  const pedirPermisoUbicacion = async () => {
+    // Android solo muestra el dialogo del sistema mientras canAskAgain sea true.
+    // Si el usuario ya lo nego, la unica via es abrir los ajustes de la app.
+    const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+
+    if (status !== "granted") {
+      setPermissionDenied(true);
+      if (!canAskAgain) {
+        Alert.alert(
+          "Permiso de ubicacion bloqueado",
+          "El telefono ya no permite volver a preguntar. Abre los ajustes de Chaski Alerta y activa el permiso de Ubicacion.\n\nMientras tanto, tu alerta SOS se enviara por mensaje de texto indicando tu sector.",
+          [
+            { text: "Ahora no", style: "cancel" },
+            { text: "Abrir ajustes", onPress: () => Linking.openSettings() },
+          ]
+        );
+      }
+      return false;
+    }
+
+    // Con el permiso concedido, el GPS del telefono todavia puede estar apagado.
+    try {
+      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      setLocation(loc);
+      setPermissionDenied(false);
+      return true;
+    } catch {
+      setPermissionDenied(true);
+      Alert.alert(
+        "No se pudo obtener la ubicacion",
+        "Revisa que la ubicacion (GPS) del telefono este encendida. Tu alerta SOS se enviara por mensaje de texto indicando tu sector."
+      );
+      return false;
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -45,6 +105,27 @@ export default function SOSScreen() {
     return () => pulse.stop();
   }, [pulseAnim]);
 
+  /** Contingencia por SMS. Si no hay coordenadas, informa el sector registrado del comunero. */
+  const enviarSmsEmergencia = async (loc: Location.LocationObject | null) => {
+    const isAvailable = await SMS.isAvailableAsync();
+    if (!isAvailable) {
+      throw new Error("No hay servicio de SMS disponible en este dispositivo para la contingencia.");
+    }
+
+    const ubicacion = loc
+      ? `Mis coordenadas: Lat ${loc.coords.latitude.toFixed(6)}, Lon ${loc.coords.longitude.toFixed(6)}`
+      : `Sin senal GPS. Mi sector registrado: ${sector ?? "no registrado en el perfil"}`;
+
+    const { result } = await SMS.sendSMSAsync(
+      [DIRECTIVA_PHONE], // Número desde variable de entorno
+      `🚨 SOS. Yanapaway. Necesito ayuda. ${ubicacion}`
+    );
+
+    if (result === "cancelled") {
+      throw new Error("Envío de SMS de emergencia cancelado por el usuario.");
+    }
+  };
+
   const sendSOS = async () => {
     if (sending) return;
     setSending(true);
@@ -52,13 +133,25 @@ export default function SOSScreen() {
 
     try {
       let loc = location;
-      if (!loc) {
+      if (!loc && !permissionDenied) {
         loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
         setLocation(loc);
       }
 
+      if (!loc) {
+        // Sin permiso de ubicacion la alerta sale igual por SMS con el sector del perfil.
+        await enviarSmsEmergencia(null);
+        setSent(true);
+        Animated.timing(successAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
+        setTimeout(() => {
+          setSent(false);
+          successAnim.setValue(0);
+        }, 4000);
+        return;
+      }
+
       const networkState = await Network.getNetworkStateAsync();
-      
+
       // En Android, isInternetReachable puede ser nulo si no se puede determinar,
       // por lo que isConnected es el chequeo principal.
       if (networkState.isConnected) {
@@ -66,7 +159,7 @@ export default function SOSScreen() {
 
         const res = await fetch(`${API_URL}/api/alertas`, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
             "Authorization": `Bearer ${accessToken}`
           },
@@ -79,21 +172,7 @@ export default function SOSScreen() {
         if (!res.ok) throw new Error("Error del servidor al emitir la alerta por internet.");
       } else {
         // 🔴 CONTINGENCIA OFFLINE (SMS NATIVO)
-        const isAvailable = await SMS.isAvailableAsync();
-        if (isAvailable) {
-          const mensajeSms = `🚨 SOS. Yanapaway. Necesito ayuda. Sin conexión a internet. Mis coordenadas: Lat ${loc.coords.latitude.toFixed(6)}, Lon ${loc.coords.longitude.toFixed(6)}`;
-          
-          const { result } = await SMS.sendSMSAsync(
-            [DIRECTIVA_PHONE], // Número desde variable de entorno
-            mensajeSms
-          );
-
-          if (result === 'cancelled') {
-             throw new Error("Envío de SMS de emergencia cancelado por el usuario.");
-          }
-        } else {
-          throw new Error("No hay servicio de SMS disponible en este dispositivo para la contingencia offline.");
-        }
+        await enviarSmsEmergencia(loc);
       }
 
       setSent(true);
@@ -109,6 +188,38 @@ export default function SOSScreen() {
     }
   };
 
+  // ── P04: el SOS exige mantener pulsado, para evitar alertas accidentales ──
+  const iniciarPulsacion = () => {
+    if (sending || sent) return;
+    setHolding(true);
+    Vibration.vibrate(40);
+    holdAnim.setValue(0);
+    Animated.timing(holdAnim, {
+      toValue: 1,
+      duration: HOLD_MS,
+      useNativeDriver: true,
+    }).start();
+    holdTimer.current = setTimeout(() => {
+      holdTimer.current = null;
+      setHolding(false);
+      holdAnim.setValue(0);
+      sendSOS();
+    }, HOLD_MS);
+  };
+
+  const cancelarPulsacion = () => {
+    if (holdTimer.current) {
+      clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+    }
+    setHolding(false);
+    Animated.timing(holdAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
+  };
+
+  useEffect(() => () => {
+    if (holdTimer.current) clearTimeout(holdTimer.current);
+  }, []);
+
   return (
     <View style={s.container}>
       {/* Header */}
@@ -119,15 +230,20 @@ export default function SOSScreen() {
       </View>
 
       {/* GPS Status */}
-      <View style={[s.statusCard, { borderColor: permissionDenied ? COLORS.red100 : COLORS.green100 }]}>
-        <View style={[s.statusDot, { backgroundColor: permissionDenied ? COLORS.red500 : COLORS.green500 }]} />
+      <View style={[s.statusCard, { borderColor: permissionDenied ? COLORS.orange100 : COLORS.green100 }]}>
+        <View style={[s.statusDot, { backgroundColor: permissionDenied ? COLORS.orange500 : COLORS.green500 }]} />
         <Text style={s.statusText}>
           {permissionDenied
-            ? "GPS no disponible — Habilita permisos de ubicacion"
+            ? `Sin GPS — la alerta se enviara por SMS indicando tu sector${sector ? `: ${sector}` : ""}`
             : location
             ? `GPS activo: ${location.coords.latitude.toFixed(4)}, ${location.coords.longitude.toFixed(4)}`
             : "Obteniendo ubicacion..."}
         </Text>
+        {permissionDenied && (
+          <TouchableOpacity onPress={pedirPermisoUbicacion} style={s.statusAction}>
+            <Text style={s.statusActionText}>Activar</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* SOS Button */}
@@ -143,15 +259,21 @@ export default function SOSScreen() {
             <Animated.View style={[s.pulseRing, { transform: [{ scale: pulseAnim }] }]} />
             <TouchableOpacity
               style={[s.sosButton, sending && s.sosButtonDisabled]}
-              onPress={sendSOS}
-              disabled={sending || permissionDenied}
-              activeOpacity={0.8}
+              onPressIn={iniciarPulsacion}
+              onPressOut={cancelarPulsacion}
+              disabled={sending}
+              activeOpacity={1}
             >
+              {/* Relleno que crece mientras se mantiene pulsado (P04) */}
+              <Animated.View
+                pointerEvents="none"
+                style={[s.holdFill, { transform: [{ scale: holdAnim }] }]}
+              />
               {sending ? (
                 <ActivityIndicator size="large" color="white" />
               ) : (
                 <>
-                  <Ionicons name="alert-circle" size={48} color="white" />
+                  <Ionicons name={holding ? "radio-button-on" : "alert-circle"} size={48} color="white" />
                   <Text style={s.sosText}>SOS</Text>
                 </>
               )}
@@ -161,7 +283,9 @@ export default function SOSScreen() {
       </View>
 
       <Text style={s.instructions}>
-        Presiona el boton para enviar una alerta de emergencia con tu ubicacion GPS
+        {holding
+          ? "Manten pulsado... suelta para cancelar"
+          : "Manten pulsado el boton 3 segundos para enviar una alerta de emergencia"}
       </Text>
 
       {/* Connection info */}
@@ -181,10 +305,13 @@ const s = StyleSheet.create({
   statusCard: { flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: COLORS.bgCard, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 14, borderWidth: 1, width: "100%", marginBottom: 40 },
   statusDot: { width: 8, height: 8, borderRadius: 4 },
   statusText: { fontSize: 12, color: COLORS.textSecondary, flex: 1 },
+  statusAction: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: COLORS.orange100 },
+  statusActionText: { fontSize: 11, fontWeight: "700", color: COLORS.orange600 },
   sosContainer: { alignItems: "center", justifyContent: "center", marginBottom: 32 },
   pulseRing: { position: "absolute", width: 200, height: 200, borderRadius: 100, borderWidth: 3, borderColor: "rgba(220,38,38,0.15)", backgroundColor: "rgba(220,38,38,0.04)" },
   sosButton: { width: 160, height: 160, borderRadius: 80, backgroundColor: COLORS.red500, alignItems: "center", justifyContent: "center", elevation: 12, shadowColor: COLORS.red600, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 20 },
   sosButtonDisabled: { backgroundColor: COLORS.textMuted },
+  holdFill: { position: "absolute", width: 160, height: 160, borderRadius: 80, backgroundColor: COLORS.red600 },
   sosText: { fontSize: 28, fontWeight: "900", color: "white", marginTop: 4, letterSpacing: 4 },
   successCircle: { alignItems: "center" },
   successText: { fontSize: 22, fontWeight: "800", color: COLORS.green600, marginTop: 12 },

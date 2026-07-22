@@ -2,7 +2,7 @@
 // CHASKI ALERTA — App Principal
 // Tab Navigation: SOS | Comunicados | Info
 // ═══════════════════════════════════════════════════
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, TouchableOpacity, Text, StyleSheet, SafeAreaView, StatusBar, ActivityIndicator, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import SOSScreen from "./screens/SOSScreen";
@@ -39,14 +39,45 @@ const tabs: Tab[] = [
   { key: "info", label: "Info", icon: "information-circle-outline", iconActive: "information-circle", color: COLORS.teal500 },
 ];
 
+import { prepararCanalAndroid, registrarDispositivo } from "./src/services/push";
+import Onboarding, { debeMostrarOnboarding } from "./src/components/Onboarding";
 import { AuthProvider, useAuth } from "./src/contexts/AuthContext";
 import { ComunicadosProvider, useComunicados } from "./src/contexts/ComunicadosContext";
 import LoginScreen from "./screens/LoginScreen";
 
 function MainApp() {
   const [activeTab, setActiveTab] = useState<TabKey>("sos");
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, accessToken } = useAuth();
   const { newAlert, alertAnim } = useComunicados();
+
+  const [mostrarGuia, setMostrarGuia] = useState(false);
+
+  // Canal de alta prioridad: sin el, Android silencia los avisos en reposo.
+  useEffect(() => {
+    prepararCanalAndroid();
+  }, []);
+
+  // Guia de bienvenida: solo la primera vez que el comunero entra (P07).
+  useEffect(() => {
+    if (!user) return;
+    debeMostrarOnboarding().then(setMostrarGuia);
+  }, [user]);
+
+  // Al iniciar sesion se registra el telefono para recibir push (P05).
+  useEffect(() => {
+    if (accessToken) registrarDispositivo(accessToken);
+  }, [accessToken]);
+
+  // Al tocar la notificacion, abre la pestaña que corresponde.
+  const respuestaRef = useRef<Notifications.EventSubscription | null>(null);
+  useEffect(() => {
+    respuestaRef.current = Notifications.addNotificationResponseReceivedListener((resp) => {
+      const tipo = resp.notification.request.content.data?.tipo;
+      if (tipo === "comunicado") setActiveTab("comunicados");
+      else if (tipo === "alerta") setActiveTab("sos");
+    });
+    return () => respuestaRef.current?.remove();
+  }, []);
 
   if (isLoading) {
     return (
@@ -72,6 +103,9 @@ function MainApp() {
   return (
     <SafeAreaView style={s.container}>
       <StatusBar barStyle="dark-content" backgroundColor={COLORS.bgBody} />
+
+      {/* Guia de bienvenida, solo en el primer uso (P07) */}
+      {mostrarGuia && <Onboarding onFinalizar={() => setMostrarGuia(false)} />}
 
       {/* In-app premium global notification banner */}
       {newAlert && (

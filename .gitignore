@@ -31,3 +31,8 @@ android/.gradle/
 android/.idea/
 android/local.properties
 .cxx/
+# ─── Credenciales de Firebase (Fase 3 · notificaciones push) ───
+# NO subir nunca: la clave de cuenta de servicio da acceso de administrador.
+Backend/firebase-service-account.json
+**/google-services.json
+**/GoogleService-Info.plist

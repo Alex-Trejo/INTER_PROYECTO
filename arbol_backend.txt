@@ -1,0 +1,46 @@
+Backend/
+├── core/
+    ├── __init__.py
+    ├── config.py
+    ├── push.py
+    └── security.py
+├── database/
+    ├── __init__.py
+    └── connection.py
+├── keycloak/
+    ├── themes/
+        └── chaski/
+    ├── LEEME.md
+    ├── chaski-realm.json
+    ├── configurar_idioma.py
+    └── configurar_textos_kichwa.py
+├── migraciones/
+    └── 001_dispositivos_push.sql
+├── models/
+    ├── __init__.py
+    └── schemas.py
+├── routers/
+    ├── __init__.py
+    ├── alertas.py
+    ├── auth.py
+    ├── comunicados.py
+    ├── dispositivos.py
+    ├── membresia.py
+    ├── notificaciones.py
+    ├── perfil.py
+    └── sectores.py
+├── .env
+├── NOTIFICACIONES_PUSH.md
+├── README.md
+├── check_kc.py
+├── conversacion_chaski_alert.md
+├── debug_kc.py
+├── final.sql
+├── firebase-service-account.json
+├── init.sql
+├── kc_add_exact.py
+├── main.py
+├── requirements.txt
+├── test_aprobar.py
+├── test_http.py
+└── walkthrough.md

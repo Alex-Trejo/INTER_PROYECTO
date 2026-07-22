@@ -4,6 +4,10 @@
 
 Sistema de alerta comunitaria con identidad Kichwa para comunidades rurales del Ecuador.
 
+> ### 👉 [**EMPEZAR_AQUI.md**](EMPEZAR_AQUI.md)
+> Guía única con los comandos exactos para arrancar todo, en local o publicado en
+> internet, y dónde va cada configuración. **Empieza por ahí.**
+
 ---
 
 ## 📋 Prerequisitos
@@ -242,6 +246,11 @@ INTER_PROYECTO/
 | **Keycloak Auth**| http://localhost:8080 | Gestor de Identidad y Acceso (admin/admin) |
 | **PostGIS DB** | localhost:5433 | Base de datos (user: admin, pass: password123) |
 | **Expo Mobile** | http://localhost:8081 | Servidor Metro Bundler |
+
+### 👥 Credenciales de Usuarios de Prueba (App y Web)
+* **Directiva:** `admin@chaski.ec` 
+* **Comunero:** `vecino@chaski.ec` 
+*(Usa estas credenciales en la pantalla de inicio de sesión de la app o la web para simular los diferentes roles).*
 
 ---
 

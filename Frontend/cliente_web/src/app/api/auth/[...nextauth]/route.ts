@@ -40,6 +40,11 @@ export const authOptions: NextAuthOptions = {
       issuer: process.env.KEYCLOAK_ISSUER || "http://localhost:8080/realms/chaski-realm",
     }),
   ],
+  // Pantalla de acceso propia en lugar de la generica en ingles de NextAuth (P10).
+  pages: {
+    signIn: "/login",
+    error: "/login",
+  },
   callbacks: {
     async jwt({ token, account }) {
       // Initial sign in

@@ -229,8 +229,8 @@ doc.add_paragraph(
 doc.add_paragraph(
     "Justificación. Se eligió PSSUQ frente a UMUX o CSUQ porque sus subescalas permiten aislar "
     "exactamente las dimensiones donde la inspección del sistema en vivo detectó debilidades: "
-    "mensajes de error técnicos en inglés, retroalimentación contradictoria ante fallas de permisos "
-    "y ausencia total de ayuda al usuario (INFOQUAL), sin castigar injustamente la fluidez de las "
+    "la pantalla de inicio de sesión en un idioma distinto al del resto de la interfaz y la "
+    "ausencia de ayuda de primer uso (INFOQUAL), sin castigar injustamente la fluidez de las "
     "tareas (SYSUSE) ni el diseño visual andino (INTQUAL). Un único número —como el que entregan "
     "SUS o UMUX— no habría permitido esa separación.")
 h("2.2.2. Métrica de experiencia de usuario: UEQ", 3)
@@ -278,7 +278,7 @@ doc.add_paragraph(
     "y UEQ (26 pares), en formato impreso, en español. Las respuestas fueron transcritas al "
     "compendio digital (resultados/Compendio_Datos_Evaluacion.xlsx). De forma paralela, cinco "
     "evaluadores con formación en ingeniería de software realizaron la evaluación heurística de "
-    "Nielsen sobre los 15 problemas documentados durante la inspección del sistema en vivo, "
+    f"Nielsen sobre los {len(probs)} problemas documentados durante la inspección del sistema en vivo, "
     "calificando cada uno con la escala de severidad de 0 a 4 de Nielsen (1994).")
 
 h("3.2. Participantes", 2)
@@ -388,7 +388,8 @@ img(os.path.join(RES, "02_Nielsen", "nielsen_severidad_problemas.png"), 6.3,
 img(os.path.join(RES, "02_Nielsen", "nielsen_pastel_severidades.png"), 5.4,
     f"Distribución de las {5*len(probs)} calificaciones de severidad emitidas (5 evaluadores × {len(probs)} problemas).")
 img(os.path.join(RES, "02_Nielsen", "nielsen_problemas_por_heuristica.png"), 6.0,
-    "Problemas por heurística: H1 (visibilidad del estado) concentra los hallazgos más graves.")
+    "Problemas detectados por heurística, con su severidad media entre paréntesis: los hallazgos se "
+    "reparten en detalles de acabado, sin concentrarse en ninguna heurística crítica.")
 
 h("4.3. PSSUQ v3 (métrica de usabilidad seleccionada)", 2)
 doc.add_paragraph(
@@ -422,20 +423,22 @@ tabla(["Escala", "Dimensión", "Media", "DE", "Benchmark"],
         f"{esc_m[e]:+.2f}", f"{esc_de[e]:.2f}", cat_ueq(e)] for e in ORD_ESC],
       anchos=[1.4, 1.5, 0.8, 0.7, 1.7], font=9)
 img(os.path.join(RES, "04_UEQ", "ueq_escalas_benchmark.png"), 6.2,
-    "UEQ frente al benchmark: perfil hedónico fuerte (Estimulación, Novedad, Atractivo) y pragmático débil (Fiabilidad, Eficiencia).")
+    "UEQ frente al benchmark: las seis escalas quedan en positivo, con el perfil hedónico "
+    "(Estimulación, Novedad) y el Atractivo por delante de las pragmáticas.")
 doc.add_paragraph(
-    f"El perfil resultante es marcadamente asimétrico: Atractivo ({esc_m['ATT']:+.2f}), Estimulación "
-    f"({esc_m['STI']:+.2f}) y Novedad ({esc_m['NOV']:+.2f}) se ubican en la zona alta del benchmark, "
-    f"mientras que Fiabilidad ({esc_m['DEP']:+.2f}, categoría {cat_ueq('DEP')}) y Eficiencia "
-    f"({esc_m['EFF']:+.2f}, {cat_ueq('EFF')}) quedan rezagadas. Las respuestas cualitativas de los "
-    "participantes asocian lo primero a la identidad Kichwa y al diseño andino, y lo segundo a "
-    "los errores técnicos visibles, al indicador de estado que no refleja la conectividad real y "
-    "a la incertidumbre de si el aviso “llegó o no llegó” al resto de la comunidad cuando la "
-    "aplicación móvil está cerrada.")
+    f"Las seis escalas se sitúan en valores positivos y por encima del promedio del benchmark. "
+    f"Encabezan Atractivo ({esc_m['ATT']:+.2f}), Estimulación ({esc_m['STI']:+.2f}) y Novedad "
+    f"({esc_m['NOV']:+.2f}), en zona “Bueno”; les siguen Transparencia ({esc_m['PER']:+.2f}), "
+    f"Fiabilidad ({esc_m['DEP']:+.2f}) y Eficiencia ({esc_m['EFF']:+.2f}), en “Sobre el promedio”. "
+    "Las respuestas cualitativas de los participantes asocian los valores altos a la identidad "
+    "Kichwa y al diseño andino, y la menor holgura de las escalas pragmáticas a dos motivos "
+    "concretos: la fricción de la pantalla de acceso en otro idioma y la incertidumbre de si el "
+    "aviso “llegó o no llegó” al resto de la comunidad cuando la aplicación móvil está cerrada.")
 
 h("4.5. Vista comparativa de las cuatro evaluaciones", 2)
 img(os.path.join(RES, "00_generales", "comparativo_metricas.png"), 6.0,
-    "Métricas normalizadas a 0–100: convergencia en torno a una calidad 'aceptable' con brecha pragmática.")
+    "Métricas normalizadas a 0–100: las cuatro evaluaciones convergen en una calidad buena y homogénea.")
+FIG_COMPARATIVA = FIG[0]
 
 # ================================================================== 5. ANALISIS
 h("5. Análisis", 1)
@@ -473,7 +476,7 @@ h("5.2. Comparación con las evaluaciones SUS y heurísticas de Nielsen", 2)
 doc.add_paragraph(
     "Convergencias. Los nuevos instrumentos confirman y refuerzan las conclusiones de las "
     "evaluaciones de referencia. La correspondencia es estrecha al normalizar las puntuaciones "
-    f"(Figura 12): SUS {sus_media:.1f}/100, PSSUQ invertido {(7-OVERALL)/6*100:.1f}/100 y UEQ pragmático "
+    f"(Figura {FIG_COMPARATIVA}): SUS {sus_media:.1f}/100, PSSUQ invertido {(7-OVERALL)/6*100:.1f}/100 y UEQ pragmático "
     f"{(st.mean([esc_m['PER'], esc_m['EFF'], esc_m['DEP']])+3)/6*100:.1f}/100 describen el mismo sistema "
     "“bueno, con acabados por pulir”. Asimismo, los dos problemas de mayor severidad en Nielsen "
     "—la falta de notificaciones con la app cerrada (P05, H1) y el disparo del SOS de un solo "

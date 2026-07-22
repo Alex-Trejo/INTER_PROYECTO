@@ -8,6 +8,7 @@ from database.connection import database
 from core.security import get_current_user, require_role
 from models.schemas import AlertaCreate, AlertaResponse, AlertaEstadoUpdate
 from core.config import settings
+from core import push
 import httpx
 
 router = APIRouter(prefix="/api/alertas", tags=["Alertas / Yanapaway"])
@@ -97,6 +98,17 @@ async def crear_alerta(
         )
         # Delegar la llamada a Telegram en segundo plano para no bloquear al usuario
         background_tasks.add_task(notificar_telegram_background, alerta.lat, alerta.lng, nombre_real)
+
+        # Notificacion push a la comunidad: llega aunque la app este cerrada (P05).
+        # Se excluye al propio emisor, que ya ve la confirmacion en su pantalla.
+        background_tasks.add_task(
+            push.notificar_alerta_sos,
+            nombre_real,
+            alerta.lat,
+            alerta.lng,
+            row["id"],
+            current_user.get("sub"),
+        )
 
         return AlertaResponse(
             id=row["id"],

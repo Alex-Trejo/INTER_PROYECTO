@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import * as SecureStore from 'expo-secure-store';
 import * as AuthSession from 'expo-auth-session';
 import { jwtDecode } from 'jwt-decode';
-import { API_URL, KEYCLOAK_URL, CLIENT_ID } from '../../config';
+import { KEYCLOAK_URL, CLIENT_ID } from '../../config';
+import { darDeBajaDispositivo } from '../services/push';
 
 const discovery = {
   authorizationEndpoint: `${KEYCLOAK_URL}/protocol/openid-connect/auth`,
@@ -124,6 +125,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
+    try {
+      // Deja de notificar este telefono antes de perder el token de sesion
+      const tokenActual = await SecureStore.getItemAsync('accessToken');
+      if (tokenActual) await darDeBajaDispositivo(tokenActual);
+    } catch {
+      // No debe impedir el cierre de sesion
+    }
+
     try {
       const refreshToken = await SecureStore.getItemAsync('refreshToken');
       if (refreshToken) {

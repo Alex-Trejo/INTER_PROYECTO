@@ -1,0 +1,543 @@
+/* ══════════════════════════════════════════════════════════════
+   CHASKI ALERTA — Tema de inicio de sesion para Keycloak
+   Reutiliza el sistema de diseno del panel web (globals.css).
+   ══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap');
+
+:root {
+  --bg-body: #F0F4F8;
+  --bg-card: #FFFFFF;
+  --bg-input: #F1F5F9;
+
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #94A3B8;
+
+  --border-light: #E2E8F0;
+
+  --teal-700: #0A5D60;
+  --teal-600: #0D7377;
+  --teal-500: #14919B;
+  --teal-400: #23B5C0;
+  --teal-100: #D6F5F8;
+  --teal-50:  #EEFBFC;
+
+  --red-600: #DC2626;
+  --red-500: #EF4444;
+  --red-50:  #FEF2F2;
+  --red-100: #FEE2E2;
+
+  --green-600: #16A34A;
+  --green-50:  #F0FDF4;
+  --green-100: #DCFCE7;
+
+  --orange-500: #F97316;
+  --orange-50:  #FFF7ED;
+  --orange-100: #FFEDD5;
+
+  --gradient-primary: linear-gradient(135deg, #14919B 0%, #0D7377 100%);
+  --gradient-hero: linear-gradient(135deg, #0D7377 0%, #14919B 40%, #23B5C0 100%);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+
+  --shadow-xl: 0 20px 50px rgba(0,0,0,0.10), 0 8px 20px rgba(0,0,0,0.04);
+}
+
+/* ─── Lienzo ──────────────────────────────────────── */
+html {
+  min-height: 100%;
+}
+
+body {
+  background: var(--bg-body) !important;
+  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+  color: var(--text-primary);
+  margin: 0;
+  min-height: 100vh;
+}
+
+/* Halo andino de fondo, coherente con el degradado del panel */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 15% 12%, rgba(20, 145, 155, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 85% 88%, rgba(249, 115, 22, 0.10) 0%, transparent 45%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.login-pf {
+  background: transparent !important;
+  height: auto;
+}
+
+.login-pf body {
+  background: var(--bg-body) !important;
+}
+
+#kc-header,
+.login-pf-page .login-pf-header {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Encabezado con el logotipo ──────────────────── */
+/* Se oculta el texto del realm (font-size: 0) y se muestra el logo real.
+   La ruta es relativa a este CSS, asi no depende del hash de recursos de Keycloak. */
+#kc-header-wrapper {
+  position: relative;
+  z-index: 1;
+  padding: 34px 16px 18px !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  color: transparent !important;
+  text-transform: none !important;
+}
+
+#kc-header-wrapper::before {
+  content: '';
+  display: block;
+  width: 216px;
+  height: 165px;   /* proporcion 1.31 del PNG (500x382) */
+  margin: 0 auto;
+  background: url('../img/logo.png') center / contain no-repeat;
+}
+
+@media (max-width: 520px) {
+  #kc-header-wrapper::before {
+    width: 168px;
+    height: 128px;
+  }
+}
+
+.login-pf-page .login-pf-header {
+  margin-bottom: 8px;
+}
+
+/* ─── Tarjeta ─────────────────────────────────────── */
+.login-pf-page .card-pf {
+  position: relative;
+  z-index: 1;
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: 38px 34px 30px;
+  margin: 0 auto;
+  max-width: 440px;
+  border-top: none;
+  overflow: hidden;
+}
+
+/* Franja superior con el degradado de la marca */
+.login-pf-page .card-pf::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: var(--gradient-hero);
+}
+
+#kc-content-wrapper {
+  padding-top: 4px;
+}
+
+/* ─── Titulo ──────────────────────────────────────── */
+#kc-page-title {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  text-align: center;
+  margin: 0 0 6px;
+}
+
+/* Sin subtitulo: el logotipo ya incluye "Seguridad Comunitaria Digital" */
+
+/* ─── Selector de idioma ──────────────────────────── */
+/* Se ancla arriba a la derecha de la tarjeta, sin empujar el titulo. */
+.login-pf-page .login-pf-header {
+  position: relative;
+}
+
+/* En su propia fila, alineado a la derecha: nunca se solapa con el titulo. */
+#kc-locale {
+  position: static;
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 0 0 6px;
+  z-index: 20;
+}
+
+#kc-locale-wrapper,
+#kc-locale-dropdown {
+  position: relative;
+}
+
+#kc-current-locale-link {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: var(--radius-sm) !important;
+  padding: 6px 12px !important;
+  color: var(--text-secondary) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 12px !important;
+  font-weight: 600 !important;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#kc-current-locale-link:hover {
+  border-color: var(--teal-400) !important;
+  color: var(--teal-600) !important;
+}
+
+/* El menu solo se muestra al desplegarlo (lo controla el tema base) */
+#kc-locale ul.pf-c-dropdown__menu {
+  min-width: 148px;
+  padding: 6px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  background: var(--bg-card);
+}
+
+#kc-locale ul .pf-c-dropdown__menu-item {
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+#kc-locale ul .pf-c-dropdown__menu-item:hover {
+  background: var(--teal-50);
+  color: var(--teal-600);
+}
+
+#kc-page-title {
+  margin-top: 2px;
+}
+
+/* ─── Etiquetas y campos ──────────────────────────── */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.pf-c-form__label,
+.pf-c-form__label-text,
+label.control-label,
+#kc-form-login label {
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 12.5px !important;
+  font-weight: 700 !important;
+  color: var(--text-secondary) !important;
+  margin-bottom: 7px !important;
+  display: block;
+}
+
+input#username,
+input#password,
+input[type="text"].pf-c-form-control,
+input[type="password"].pf-c-form-control,
+input[type="email"].pf-c-form-control,
+.pf-c-form-control {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 14px 16px !important;
+  height: auto !important;
+  border-radius: var(--radius-md) !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-light) !important;
+  color: var(--text-primary) !important;
+  transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+input#username:focus,
+input#password:focus,
+.pf-c-form-control:focus {
+  background: var(--bg-card) !important;
+  border-color: var(--teal-500) !important;
+  box-shadow: 0 0 0 4px rgba(20, 145, 155, 0.12) !important;
+}
+
+.pf-c-form-control::placeholder {
+  color: var(--text-muted) !important;
+  font-weight: 400;
+}
+
+/* ─── Campo de contrasena con boton de ver ────────── */
+/* El input y el boton deben leerse como un unico control.
+   Los selectores llevan #password porque una regla con ID gana en especificidad. */
+.pf-c-input-group {
+  display: flex;
+  align-items: stretch;
+  border-radius: var(--radius-md);
+  background: transparent;
+  transition: box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pf-c-input-group input#password,
+.pf-c-input-group input.pf-c-form-control,
+.pf-c-input-group .pf-c-form-control {
+  border-radius: var(--radius-md) 0 0 var(--radius-md) !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+.pf-c-input-group button.pf-c-button.pf-m-control,
+.pf-c-input-group .pf-c-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  padding: 0 16px !important;
+  background: var(--bg-input) !important;
+  border: 1.5px solid var(--border-light) !important;
+  border-left: none !important;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0 !important;
+  color: var(--text-muted) !important;
+  cursor: pointer;
+  box-shadow: none !important;
+  transition: color 0.2s ease, background 0.25s ease, border-color 0.25s ease;
+}
+
+.pf-c-input-group button.pf-c-button.pf-m-control:hover {
+  color: var(--teal-600) !important;
+}
+
+.pf-c-input-group button.pf-c-button.pf-m-control::before,
+.pf-c-input-group button.pf-c-button.pf-m-control::after {
+  display: none !important;
+}
+
+/* Al enfocar, el anillo rodea todo el grupo, no solo el input */
+.pf-c-input-group:focus-within {
+  box-shadow: 0 0 0 4px rgba(20, 145, 155, 0.12);
+}
+
+.pf-c-input-group:focus-within input#password,
+.pf-c-input-group:focus-within .pf-c-form-control,
+.pf-c-input-group:focus-within button.pf-c-button.pf-m-control {
+  background: var(--bg-card) !important;
+  border-color: var(--teal-500) !important;
+}
+
+/* ─── Recordarme / olvide contrasena ──────────────── */
+#kc-form-options,
+.login-pf-settings {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 20px;
+  font-size: 13px;
+}
+
+.checkbox label,
+#kc-form-options label {
+  font-weight: 500 !important;
+  font-size: 13px !important;
+  color: var(--text-secondary) !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--teal-500);
+  cursor: pointer;
+}
+
+a {
+  color: var(--teal-600);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+a:hover {
+  color: var(--teal-500);
+  text-decoration: none;
+}
+
+/* ─── Boton principal ─────────────────────────────── */
+input[type="submit"].pf-c-button,
+.pf-c-button.pf-m-primary,
+#kc-login {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-primary) !important;
+  color: #FFFFFF !important;
+  border: none !important;
+  border-radius: var(--radius-md) !important;
+  padding: 15px 28px !important;
+  height: auto !important;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 14.5px !important;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1) !important;
+  box-shadow: 0 4px 14px rgba(13, 115, 119, 0.3) !important;
+}
+
+input[type="submit"].pf-c-button:hover,
+.pf-c-button.pf-m-primary:hover,
+#kc-login:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(13, 115, 119, 0.38) !important;
+}
+
+input[type="submit"].pf-c-button:active,
+#kc-login:active {
+  transform: translateY(0);
+}
+
+/* ─── Pie: registro ───────────────────────────────── */
+/* El separador se dibuja solo en el contenedor exterior, para no duplicar la linea. */
+#kc-registration-container {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-light);
+  background: transparent;
+}
+
+#kc-registration-container,
+#kc-registration {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+#kc-registration {
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+/* El pie forma parte de la misma tarjeta blanca, sin banda gris */
+#kc-info,
+#kc-info-wrapper,
+.login-pf-page .login-pf-signup,
+.login-pf-page #kc-info-wrapper {
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  font-size: 13px;
+}
+
+/* Evita que "Registrate / Killkay" se parta en dos lineas */
+#kc-registration-container,
+#kc-registration {
+  line-height: 1.7;
+}
+
+#kc-registration span {
+  display: inline;
+  white-space: nowrap;
+}
+
+#kc-registration a {
+  white-space: nowrap;
+  margin-left: 4px;
+}
+
+/* ─── Mensajes ────────────────────────────────────── */
+.alert,
+.pf-c-alert {
+  border-radius: var(--radius-md) !important;
+  border: 1px solid transparent !important;
+  padding: 13px 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  margin-bottom: 18px !important;
+  box-shadow: none !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.alert-error,
+.pf-c-alert.pf-m-danger {
+  background: var(--red-50) !important;
+  border-color: var(--red-100) !important;
+  color: var(--red-600) !important;
+}
+
+.alert-success,
+.pf-c-alert.pf-m-success {
+  background: var(--green-50) !important;
+  border-color: var(--green-100) !important;
+  color: var(--green-600) !important;
+}
+
+.alert-warning,
+.pf-c-alert.pf-m-warning {
+  background: var(--orange-50) !important;
+  border-color: var(--orange-100) !important;
+  color: var(--orange-500) !important;
+}
+
+.alert-info,
+.pf-c-alert.pf-m-info {
+  background: var(--teal-50) !important;
+  border-color: var(--teal-100) !important;
+  color: var(--teal-600) !important;
+}
+
+.pf-c-alert__icon {
+  display: none;
+}
+
+.pf-c-form__helper-text.pf-m-error,
+#input-error,
+#input-error-password,
+#input-error-username {
+  color: var(--red-600) !important;
+  font-size: 12.5px !important;
+  font-weight: 600 !important;
+  margin-top: 6px;
+  display: block;
+}
+
+/* ─── Responsive ──────────────────────────────────── */
+@media (max-width: 520px) {
+  #kc-header-wrapper {
+    font-size: 24px !important;
+    padding: 28px 16px 18px !important;
+  }
+
+  .login-pf-page .card-pf {
+    padding: 28px 22px 24px;
+    margin: 0 14px;
+    border-radius: var(--radius-lg);
+  }
+
+  #kc-page-title {
+    font-size: 21px;
+  }
+}

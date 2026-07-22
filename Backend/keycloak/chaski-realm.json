@@ -34,8 +34,12 @@
       "serviceAccountsEnabled": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:8000/*"],
-      "webOrigins": ["http://localhost:8000"],
+      "redirectUris": [
+        "http://localhost:8000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8000"
+      ],
       "protocol": "openid-connect"
     },
     {
@@ -47,8 +51,12 @@
       "secret": "web-admin-secret",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["http://localhost:3000/*"],
-      "webOrigins": ["http://localhost:3000"],
+      "redirectUris": [
+        "http://localhost:3000/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
       "protocol": "openid-connect"
     },
     {
@@ -58,8 +66,13 @@
       "publicClient": true,
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
-      "redirectUris": ["exp://localhost:8081/*", "http://localhost:8081/*"],
-      "webOrigins": ["*"],
+      "redirectUris": [
+        "exp://localhost:8081/*",
+        "http://localhost:8081/*"
+      ],
+      "webOrigins": [
+        "*"
+      ],
       "protocol": "openid-connect"
     }
   ],
@@ -78,7 +91,10 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["Directiva", "default-roles-chaski-realm"]
+      "realmRoles": [
+        "Directiva",
+        "default-roles-chaski-realm"
+      ]
     },
     {
       "username": "vecino@chaski.ec",
@@ -94,7 +110,15 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["default-roles-chaski-realm"]
+      "realmRoles": [
+        "default-roles-chaski-realm"
+      ]
     }
+  ],
+  "internationalizationEnabled": true,
+  "defaultLocale": "es",
+  "supportedLocales": [
+    "es",
+    "en"
   ]
 }

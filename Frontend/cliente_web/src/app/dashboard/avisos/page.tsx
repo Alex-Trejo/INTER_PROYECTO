@@ -26,6 +26,17 @@ export default function AvisosPage() {
   const [titulo, setTitulo] = useState("");
   const [mensaje, setMensaje] = useState("");
   const [autor, setAutor] = useState("");
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [editando, setEditando] = useState<Comunicado | null>(null);
+  const [confirmacion, setConfirmacion] = useState<
+    { tipo: "publicar" } | { tipo: "eliminar"; comunicado: Comunicado } | null
+  >(null);
+
+  // Longitudes minimas: deben coincidir con la validacion del backend.
+  const MIN_TITULO = 5;
+  const MIN_MENSAJE = 10;
+  const tituloValido = titulo.trim().length >= MIN_TITULO;
+  const mensajeValido = mensaje.trim().length >= MIN_MENSAJE;
 
   const fetchComunicados = useCallback(async () => {
     if (status !== "authenticated" || !session) return;
@@ -39,53 +50,109 @@ export default function AvisosPage() {
       if (!res.ok) throw new Error("Error al obtener comunicados");
       const data = await res.json();
       setComunicados(data);
+      setLastUpdate(new Date());
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error de conexion");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [session, status]);
 
+  // Auto-actualizacion cada 10 s, igual que el mapa y el muro movil.
   useEffect(() => {
     if (status === "authenticated") {
       fetchComunicados();
+      const interval = setInterval(fetchComunicados, 10000);
+      return () => clearInterval(interval);
     }
   }, [fetchComunicados, status]);
 
-  const handleSubmit = async (e: FormEvent) => {
+  // El formulario ya no publica directamente: primero pide confirmacion.
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (!titulo.trim() || !mensaje.trim()) return;
+    if (!tituloValido || !mensajeValido) return;
+    setConfirmacion({ tipo: "publicar" });
+  };
 
+  const limpiarFormulario = () => {
+    setTitulo("");
+    setMensaje("");
+    setAutor("");
+    setEditando(null);
+    setShowForm(false);
+  };
+
+  const publicarConfirmado = async () => {
     setSubmitting(true);
     setSuccessMsg(null);
+    setConfirmacion(null);
+
+    const esEdicion = editando !== null;
+    const url = esEdicion
+      ? `${API_URL}/api/comunicados/${editando.id}`
+      : `${API_URL}/api/comunicados`;
 
     try {
       const token = (session as any)?.access_token;
-      const res = await fetch(`${API_URL}/api/comunicados`, {
-        method: "POST",
-        headers: { 
+      const res = await fetch(url, {
+        method: esEdicion ? "PUT" : "POST",
+        headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({
-          titulo: titulo.trim(),
-          mensaje: mensaje.trim(),
-          autor: autor.trim() || "Directiva Comunal",
-        }),
+        body: JSON.stringify(
+          esEdicion
+            ? { titulo: titulo.trim(), mensaje: mensaje.trim() }
+            : {
+                titulo: titulo.trim(),
+                mensaje: mensaje.trim(),
+                autor: autor.trim() || "Directiva Comunal",
+              }
+        ),
       });
 
-      if (!res.ok) throw new Error("Error al publicar comunicado");
+      if (!res.ok) {
+        throw new Error(
+          esEdicion ? "Error al corregir el comunicado" : "Error al publicar comunicado"
+        );
+      }
 
-      setTitulo("");
-      setMensaje("");
-      setAutor("");
-      setSuccessMsg("Comunicado publicado exitosamente");
-      setShowForm(false);
+      limpiarFormulario();
+      setSuccessMsg(esEdicion ? "Comunicado corregido" : "Comunicado publicado exitosamente");
       await fetchComunicados();
       setTimeout(() => setSuccessMsg(null), 5000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al publicar");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const iniciarEdicion = (c: Comunicado) => {
+    setEditando(c);
+    setTitulo(c.titulo);
+    setMensaje(c.mensaje);
+    setAutor(c.autor);
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const eliminarConfirmado = async (c: Comunicado) => {
+    setConfirmacion(null);
+    setSubmitting(true);
+    try {
+      const token = (session as any)?.access_token;
+      const res = await fetch(`${API_URL}/api/comunicados/${c.id}`, {
+        method: "DELETE",
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Error al retirar el comunicado");
+      setSuccessMsg("Comunicado retirado del muro");
+      await fetchComunicados();
+      setTimeout(() => setSuccessMsg(null), 5000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al retirar");
     } finally {
       setSubmitting(false);
     }
@@ -112,6 +179,26 @@ export default function AvisosPage() {
           </div>
 
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            {lastUpdate && (
+              <div className="stat-card" style={{ padding: "8px 14px" }}>
+                <div
+                  style={{
+                    width: "10px",
+                    height: "10px",
+                    borderRadius: "50%",
+                    background: "var(--green-500)",
+                    animation: "pulseDot 2s ease-in-out infinite",
+                    flexShrink: 0,
+                  }}
+                />
+                <div>
+                  <p className="text-[13px] font-bold" style={{ color: "var(--green-600)" }}>En vivo</p>
+                  <p className="text-[11px]" style={{ color: "var(--text-muted)" }}>
+                    {lastUpdate.toLocaleTimeString("es-EC", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+                  </p>
+                </div>
+              </div>
+            )}
             <button onClick={fetchComunicados} className="btn-secondary" type="button">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="23 4 23 10 17 10" />
@@ -224,10 +311,10 @@ export default function AvisosPage() {
                 </div>
                 <div>
                   <h2 className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>
-                    Nuevo Comunicado
+                    {editando ? "Corregir Comunicado" : "Nuevo Comunicado"}
                   </h2>
                   <p className="text-[12px] font-medium" style={{ color: "var(--teal-500)" }}>
-                    Mushuk Willay
+                    {editando ? "Allichiy Willay" : "Mushuk Willay"}
                   </p>
                 </div>
               </div>
@@ -268,6 +355,11 @@ export default function AvisosPage() {
                   <div>
                     <label htmlFor="titulo" className="input-label">
                       Titulo <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>/ Shutikuna</span>
+                      {titulo.length > 0 && !tituloValido && (
+                        <span style={{ float: "right", color: "var(--orange-600)", fontSize: "11px" }}>
+                          minimo {MIN_TITULO} caracteres
+                        </span>
+                      )}
                     </label>
                     <input
                       id="titulo"
@@ -301,8 +393,14 @@ export default function AvisosPage() {
                   <label htmlFor="mensaje" className="input-label">
                     Mensaje <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>/ Willachiy</span>
                     {mensaje.length > 0 && (
-                      <span style={{ float: "right", color: "var(--teal-500)", fontSize: "11px" }}>
-                        {mensaje.length} caracteres
+                      <span
+                        style={{
+                          float: "right",
+                          color: mensajeValido ? "var(--teal-500)" : "var(--orange-600)",
+                          fontSize: "11px",
+                        }}
+                      >
+                        {mensajeValido ? `${mensaje.length} caracteres` : `minimo ${MIN_MENSAJE} caracteres`}
                       </span>
                     )}
                   </label>
@@ -325,7 +423,7 @@ export default function AvisosPage() {
               <div style={{ display: "flex", justifyContent: "center", paddingTop: "8px" }}>
                 <button
                   type="submit"
-                  disabled={submitting || !titulo.trim() || !mensaje.trim()}
+                  disabled={submitting || !tituloValido || !mensajeValido}
                   className="btn-primary"
                   style={{ minWidth: "220px", padding: "16px 32px", fontSize: "15px" }}
                 >
@@ -349,7 +447,7 @@ export default function AvisosPage() {
                         <line x1="22" y1="2" x2="11" y2="13" />
                         <polygon points="22 2 15 22 11 13 2 9 22 2" />
                       </svg>
-                      Publicar Comunicado
+                      {editando ? "Guardar correccion" : "Publicar Comunicado"}
                     </>
                   )}
                 </button>
@@ -426,8 +524,117 @@ export default function AvisosPage() {
           }}
         >
           {comunicados.map((com, idx) => (
-            <ComunicadoCard key={com.id} comunicado={com} index={idx} />
+            <ComunicadoCard
+              key={com.id}
+              comunicado={com}
+              index={idx}
+              onEdit={iniciarEdicion}
+              onDelete={(c) => setConfirmacion({ tipo: "eliminar", comunicado: c })}
+            />
           ))}
+        </div>
+      )}
+
+      {/* ─── DIALOGO DE CONFIRMACION ─────────────── */}
+      {confirmacion && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 9999,
+            padding: "24px",
+          }}
+          onClick={() => setConfirmacion(null)}
+        >
+          <div
+            className="card-static animate-scaleIn"
+            style={{ maxWidth: "460px", width: "100%", padding: "28px" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
+              <div
+                style={{
+                  width: "46px",
+                  height: "46px",
+                  borderRadius: "14px",
+                  background: confirmacion.tipo === "eliminar" ? "var(--red-50)" : "var(--teal-50)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke={confirmacion.tipo === "eliminar" ? "var(--red-500)" : "var(--teal-500)"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                  <line x1="12" y1="9" x2="12" y2="13" />
+                  <line x1="12" y1="17" x2="12.01" y2="17" />
+                </svg>
+              </div>
+              <h3 className="text-[18px] font-bold" style={{ color: "var(--text-primary)" }}>
+                {confirmacion.tipo === "eliminar" ? "Retirar del muro" : "Confirmar publicacion"}
+              </h3>
+            </div>
+
+            <p className="text-[14px]" style={{ color: "var(--text-secondary)", marginBottom: "24px", lineHeight: 1.6 }}>
+              {confirmacion.tipo === "eliminar" ? (
+                <>
+                  El comunicado <strong>&laquo;{confirmacion.comunicado.titulo}&raquo;</strong> dejara de
+                  verse en la aplicacion de todos los comuneros. Esta accion no se puede deshacer.
+                </>
+              ) : editando ? (
+                <>
+                  Se guardaran los cambios del comunicado <strong>&laquo;{titulo.trim()}&raquo;</strong> y
+                  todos los comuneros veran la version corregida.
+                </>
+              ) : (
+                <>
+                  El comunicado <strong>&laquo;{titulo.trim()}&raquo;</strong> se enviara a{" "}
+                  <strong>toda la comunidad</strong>. Revisa el texto antes de continuar.
+                </>
+              )}
+            </p>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+              <button type="button" className="btn-secondary" onClick={() => setConfirmacion(null)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                style={
+                  confirmacion.tipo === "eliminar"
+                    ? { background: "var(--red-500)", boxShadow: "none" }
+                    : undefined
+                }
+                onClick={() =>
+                  confirmacion.tipo === "eliminar"
+                    ? eliminarConfirmado(confirmacion.comunicado)
+                    : publicarConfirmado()
+                }
+              >
+                {confirmacion.tipo === "eliminar"
+                  ? "Si, retirar"
+                  : editando
+                  ? "Guardar cambios"
+                  : "Si, publicar"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

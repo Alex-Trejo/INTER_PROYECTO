@@ -1,0 +1,64 @@
+cliente_movil/
+├── android/
+    ├── .gradle/
+        ├── 8.14.3/
+        ├── buildOutputCleanup/
+        ├── kotlin/
+        ├── noVersion/
+        ├── vcs-1/
+        └── file-system.probe
+    ├── .kotlin/
+        ├── errors/
+        └── sessions/
+    ├── app/
+        ├── .cxx/
+        ├── src/
+        ├── build.gradle
+        ├── debug.keystore
+        ├── google-services.json
+        └── proguard-rules.pro
+    ├── gradle/
+        └── wrapper/
+    ├── .gitignore
+    ├── build.gradle
+    ├── gradle.properties
+    ├── gradlew
+    ├── gradlew.bat
+    ├── local.properties
+    └── settings.gradle
+├── assets/
+    ├── adaptive-icon.png
+    ├── favicon.png
+    ├── icon.png
+    ├── logo.png
+    └── splash-icon.png
+├── screens/
+    ├── ComunicadosScreen.tsx
+    ├── InfoScreen.tsx
+    ├── LoginScreen.tsx
+    ├── ProfileScreen.tsx
+    └── SOSScreen.tsx
+├── src/
+    ├── components/
+        └── Onboarding.tsx
+    ├── config/
+        └── servidor.ts
+    ├── contexts/
+        ├── AuthContext.tsx
+        └── ComunicadosContext.tsx
+    └── services/
+        └── push.ts
+├── .env
+├── .gitignore
+├── App.tsx
+├── README-MOVIL.md
+├── README.md
+├── app.json
+├── build-android-release.bat
+├── build-android.bat
+├── config.ts
+├── google-services.json
+├── index.ts
+├── package-lock.json
+├── package.json
+└── tsconfig.json

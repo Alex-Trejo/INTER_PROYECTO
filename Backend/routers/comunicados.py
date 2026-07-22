@@ -3,10 +3,11 @@ Chaski Alert — Router de Comunicados Oficiales.
 POST protegido por rol 'Directiva'. GET público para el muro.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from database.connection import database
 from core.security import get_current_user, require_role
-from models.schemas import ComunicadoCreate, ComunicadoResponse
+from core import push
+from models.schemas import ComunicadoCreate, ComunicadoResponse, ComunicadoUpdate
 
 router = APIRouter(prefix="/api/comunicados", tags=["Comunicados / Willaykuna"])
 
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api/comunicados", tags=["Comunicados / Willaykuna"])
 )
 async def crear_comunicado(
     comunicado: ComunicadoCreate,
+    background_tasks: BackgroundTasks,
     token_info: dict = Depends(require_role("Directiva")),
 ):
     """
@@ -50,6 +52,11 @@ async def crear_comunicado(
                 "autor": autor_verificado,
             },
         )
+        # Notificacion push: el aviso llega aunque el comunero tenga la app cerrada (P05)
+        background_tasks.add_task(
+            push.notificar_comunicado, row["titulo"], row["mensaje"], row["id"]
+        )
+
         return ComunicadoResponse(
             id=row["id"],
             titulo=row["titulo"],
@@ -94,3 +101,74 @@ async def obtener_comunicados():
         ]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al obtener comunicados: {str(e)}")
+
+
+@router.put(
+    "/{comunicado_id}",
+    response_model=ComunicadoResponse,
+    summary="Corregir Comunicado Publicado",
+)
+async def actualizar_comunicado(
+    comunicado_id: int,
+    comunicado: ComunicadoUpdate,
+    token_info: dict = Depends(require_role("Directiva")),
+):
+    """
+    Corrige el título o el mensaje de un comunicado ya publicado.
+
+    **Requiere rol: Directiva** 🔒
+    """
+    query = """
+        UPDATE comunicados
+        SET titulo = :titulo, mensaje = :mensaje
+        WHERE id = :id
+        RETURNING id, titulo, mensaje, autor, fecha_publicacion
+    """
+    try:
+        row = await database.fetch_one(
+            query=query,
+            values={
+                "id": comunicado_id,
+                "titulo": comunicado.titulo,
+                "mensaje": comunicado.mensaje,
+            },
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar comunicado: {str(e)}")
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="Comunicado no encontrado / Mana tarishka.")
+
+    return ComunicadoResponse(
+        id=row["id"],
+        titulo=row["titulo"],
+        mensaje=row["mensaje"],
+        autor=row["autor"],
+        fecha_publicacion=row["fecha_publicacion"],
+    )
+
+
+@router.delete(
+    "/{comunicado_id}",
+    status_code=200,
+    summary="Retirar Comunicado del Muro",
+)
+async def eliminar_comunicado(
+    comunicado_id: int,
+    token_info: dict = Depends(require_role("Directiva")),
+):
+    """
+    Retira del muro un comunicado publicado por error.
+
+    **Requiere rol: Directiva** 🔒
+    """
+    query = "DELETE FROM comunicados WHERE id = :id RETURNING id"
+    try:
+        row = await database.fetch_one(query=query, values={"id": comunicado_id})
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al eliminar comunicado: {str(e)}")
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="Comunicado no encontrado / Mana tarishka.")
+
+    return {"mensaje": "Comunicado retirado del muro", "id": row["id"]}

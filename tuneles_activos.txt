@@ -1,0 +1,38 @@
+﻿===============================================
+  TUNELES ACTIVOS
+===============================================
+
+  Panel web (Directiva) : https://hear-semester-comments-landing.trycloudflare.com
+  API (backend)         : https://residence-blocking-characters-guests.trycloudflare.com
+  Keycloak (login)      : https://significantly-clearly-dna-affiliation.trycloudflare.com
+
+  Guardado en:
+    Frontend/cliente_movil/.env      (EXPO_PUBLIC_*)
+    Frontend/cliente_web/.env.local  (NEXT_PUBLIC_*, NEXTAUTH_URL, KEYCLOAK_ISSUER)
+
+===============================================
+  AHORA ARRANCA LOS SERVICIOS
+===============================================
+
+  1. Base de datos y Keycloak (si no estan):
+       docker-compose up -d
+
+  2. Backend:
+       cd Backend
+       .\venv\Scripts\Activate.ps1
+       python -m uvicorn main:app --host 0.0.0.0 --port 8000
+
+  3. Panel web (lee el .env.local al arrancar, por eso va despues):
+       cd Frontend\cliente_web
+       npm run dev
+
+  4. App movil (hay que RECOMPILAR: las EXPO_PUBLIC_* se
+     incrustan en el APK):
+       Z:
+       cd Z:\Frontend\cliente_movil
+       npx expo run:android
+
+  IMPORTANTE
+   - No cierres esta ventana ni apagues la laptop: es el servidor.
+   - Si vuelves a ejecutar este script, las URLs CAMBIAN y hay que
+     reiniciar el panel web y recompilar la app movil.

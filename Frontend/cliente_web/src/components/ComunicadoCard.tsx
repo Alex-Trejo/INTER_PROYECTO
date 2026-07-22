@@ -6,10 +6,16 @@ interface Comunicado {
   fecha_publicacion: string;
 }
 
-function timeSince(dateStr: string): string {
-  // Backend returns Ecuador local time (UTC-5) without timezone info.
-  // Append offset so JS parses it correctly instead of treating it as UTC.
-  const localDateStr = dateStr.includes("+") || dateStr.includes("Z") ? dateStr : dateStr + "-05:00";
+export function timeSince(dateStr: string): string {
+  // El backend devuelve la hora local de Ecuador (UTC-5) sin indicador de zona.
+  // Se le añade el desplazamiento para que JavaScript no la lea como UTC y
+  // muestre todos los comunicados con 5 horas de desfase.
+  //
+  // La comprobacion mira el FINAL de la cadena: buscar solo "+" o "Z" no
+  // detectaba un desplazamiento negativo ya presente (p. ej. "-05:00") y se
+  // añadia un segundo offset, produciendo una fecha invalida ("hace NaNd").
+  const yaTieneZonaHoraria = /(?:Z|[+-]\d{2}:?\d{2})$/.test(dateStr);
+  const localDateStr = yaTieneZonaHoraria ? dateStr : dateStr + "-05:00";
   const seconds = Math.floor((Date.now() - new Date(localDateStr).getTime()) / 1000);
   if (seconds < 0 || seconds < 5) return "justo ahora";
   if (seconds < 60) return `hace ${seconds}s`;
@@ -20,7 +26,7 @@ function timeSince(dateStr: string): string {
   return `hace ${Math.floor(hours / 24)}d`;
 }
 
-function getInitials(name: string): string {
+export function getInitials(name: string): string {
   return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
@@ -52,12 +58,31 @@ function getCardGradient(index: number): string {
 export default function ComunicadoCard({
   comunicado,
   index,
+  onEdit,
+  onDelete,
 }: {
   comunicado: Comunicado;
   index: number;
+  onEdit?: (c: Comunicado) => void;
+  onDelete?: (c: Comunicado) => void;
 }) {
   const gradient = getCardGradient(index);
   const iconPath = cardIcons[index % cardIcons.length];
+  const conAcciones = Boolean(onEdit || onDelete);
+
+  const accionEstilo: React.CSSProperties = {
+    width: "34px",
+    height: "34px",
+    borderRadius: "11px",
+    background: "rgba(255,255,255,0.18)",
+    backdropFilter: "blur(8px)",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "rgba(255,255,255,0.95)",
+  };
 
   return (
     <article
@@ -69,35 +94,76 @@ export default function ComunicadoCard({
         minHeight: "220px",
       }}
     >
-      {/* Decorative icon */}
+      {/* Decorative icon / acciones de la Directiva */}
       <div
         style={{
           position: "absolute",
           top: "20px",
           right: "20px",
-          width: "44px",
-          height: "44px",
-          borderRadius: "14px",
-          background: "rgba(255,255,255,0.18)",
-          backdropFilter: "blur(8px)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
+          gap: "8px",
           zIndex: 3,
         }}
       >
-        <svg
-          width="22"
-          height="22"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d={iconPath} />
-        </svg>
+        {conAcciones ? (
+          <>
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(comunicado)}
+                style={accionEstilo}
+                title="Corregir este comunicado"
+                aria-label="Corregir comunicado"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg>
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(comunicado)}
+                style={accionEstilo}
+                title="Retirar del muro"
+                aria-label="Retirar comunicado del muro"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+              </button>
+            )}
+          </>
+        ) : (
+          <div
+            style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "14px",
+              background: "rgba(255,255,255,0.18)",
+              backdropFilter: "blur(8px)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d={iconPath} />
+            </svg>
+          </div>
+        )}
       </div>
 
       {/* Geometric decoration */}
